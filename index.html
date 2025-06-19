@@ -1,4 +1,8 @@
 <!DOCTYPE html>
+<!-- 
+  ВАЖНО: Для корректной работы на хостинге (Netlify, GitHub Pages и др.) 
+  этот файл ДОЛЖЕН называться index.html 
+-->
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -54,7 +58,7 @@
     </div>
 
     <script>
-        // --- Основные элементы ---
+        // --- Основные элементы DOM ---
         const splitButton = document.getElementById('splitButton');
         const inputText = document.getElementById('inputText');
         const outputDiv = document.getElementById('output');
@@ -70,22 +74,23 @@
                 return; // Ничего не делаем, если текста нет
             }
 
+            const chunks = [];
             let remainingText = text;
-            let partNumber = 1;
-
+            
+            // Сначала разбиваем весь текст на массив частей
             while (remainingText.length > 0) {
                 let chunk;
                 let nextStart;
 
-                // Если оставшийся текст короче максимальной длины, берем его целиком
+                // Если оставшийся текст короче или равен максимальной длине, берем его целиком
                 if (remainingText.length <= maxLength) {
                     chunk = remainingText;
                     nextStart = remainingText.length;
                 } else {
                     // Ищем последнее подходящее место для разрыва (пробел, перенос строки)
                     let cutOff = -1;
-                    // Ищем с конца отрезка maxLength
-                    for (let i = maxLength; i > 0; i--) {
+                    // Ищем с конца отрезка maxLength, чтобы не разорвать слово
+                    for (let i = maxLength; i >= 0; i--) {
                         if (/\s/.test(remainingText[i])) {
                             cutOff = i;
                             break;
@@ -101,15 +106,18 @@
                     nextStart = cutOff;
                 }
                 
-                // Создаем и добавляем блок с фрагментом на страницу
-                createChunkElement(chunk, partNumber, Math.ceil(text.length / maxLength));
-
+                chunks.push(chunk);
                 remainingText = remainingText.substring(nextStart).trim();
-                partNumber++;
             }
+
+            // Теперь создаем HTML-элементы для каждой части
+            const totalParts = chunks.length;
+            chunks.forEach((chunk, index) => {
+                createChunkElement(chunk, index + 1, totalParts);
+            });
         }
 
-        // --- Функция для создания блока с фрагментом ---
+        // --- Функция для создания HTML-блока с фрагментом текста ---
         function createChunkElement(chunk, part, totalParts) {
             const chunkId = `chunk-${part}`;
             const characterCount = chunk.length;
@@ -146,7 +154,7 @@
             textarea.id = chunkId;
             textarea.readOnly = true;
             textarea.rows = Math.max(5, Math.ceil(characterCount / 80)); // Динамическая высота
-            textarea.className = 'w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 text-base leading-relaxed resize-none';
+            textarea.className = 'w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 text-base leading-relaxed resize-none focus:outline-none';
             textarea.value = chunk;
 
             const footer = document.createElement('div');
@@ -159,13 +167,14 @@
             outputDiv.appendChild(container);
         }
 
-        // --- Функция для копирования в буфер обмена ---
+        // --- Функция для копирования текста в буфер обмена ---
         function copyToClipboard(elementId, button) {
             const textarea = document.getElementById(elementId);
             textarea.select();
             textarea.setSelectionRange(0, 99999); // Для мобильных устройств
 
             try {
+                // Используем document.execCommand для простоты, т.к. navigator.clipboard требует безопасного контекста (HTTPS)
                 document.execCommand('copy');
                 const feedback = button.nextElementSibling;
                 feedback.style.opacity = '1';
@@ -174,7 +183,14 @@
                 }, 2000);
             } catch (err) {
                 console.error('Не удалось скопировать текст: ', err);
-                alert('Не удалось скопировать текст. Пожалуйста, скопируйте вручную.');
+                // Заменили alert на изменение кнопки для лучшего UX
+                const originalText = button.textContent;
+                button.textContent = 'Ошибка';
+                button.classList.add('bg-red-200');
+                setTimeout(() => {
+                   button.textContent = originalText;
+                   button.classList.remove('bg-red-200');
+                }, 2500);
             }
 
             window.getSelection().removeAllRanges(); // Снимаем выделение
