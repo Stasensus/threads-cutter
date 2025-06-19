@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Разделитель текста для Threads с ИИ</title>
+    <title>Разделитель текста</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,84 +11,178 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Кастомный стиль для скроллбара */
-        textarea::-webkit-scrollbar, .hashtags-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        textarea::-webkit-scrollbar-track, .hashtags-container::-webkit-scrollbar-track {
-            background: #f1f5f9;
-            border-radius: 10px;
-        }
-        textarea::-webkit-scrollbar-thumb, .hashtags-container::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            border-radius: 10px;
-        }
-        textarea::-webkit-scrollbar-thumb:hover, .hashtags-container::-webkit-scrollbar-thumb:hover {
-            background: #64748b;
-        }
-        /* Спиннер загрузки */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        /* Оверлей для загрузки */
-        #loader-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 1rem; /* rounded-2xl */
-            z-index: 10;
+        .copy-feedback {
+            transition: opacity 0.5s ease-in-out;
         }
     </style>
 </head>
-<body class="bg-slate-100 text-slate-800 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
 
-    <div id="main-container" class="w-full max-w-4xl bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-6 relative">
-        <!-- Оверлей для загрузки -->
-        <div id="loader-overlay" class="hidden">
-            <div class="loader"></div>
-        </div>
-        
-        <!-- Заголовок -->
-        <div class="text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Разделитель текста с ИИ</h1>
-            <p class="mt-2 text-slate-500">Разделяйте, обобщайте и создавайте хештеги для ваших постов.</p>
-        </div>
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Разделитель текста</h1>
+            <p class="mt-2 text-lg text-gray-600">Разбейте длинный текст на части для Threads, Twitter и других соцсетей.</p>
+        </header>
 
-        <!-- Поле для ввода текста -->
-        <div class="space-y-2">
-            <label for="inputText" class="text-sm font-medium text-slate-700">Ваш текст:</label>
-            <textarea id="inputText" rows="10" class="w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 resize-y" placeholder="Начните вводить или вставьте сюда свой текст..."></textarea>
-            <div id="charCounter" class="text-right text-sm text-slate-500">0 символов</div>
-        </div>
+        <main class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+            <div class="mb-6">
+                <label for="inputText" class="block text-lg font-medium text-gray-700 mb-2">Ваш текст:</label>
+                <textarea id="inputText" rows="10" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="Вставьте сюда свой текст..."></textarea>
+            </div>
 
-        <!-- Gemini-powered features -->
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
-             <h3 class="text-lg font-semibold text-blue-800 mb-3">Инструменты ИИ ✨</h3>
-             <div class="flex flex-col sm:flex-row gap-3">
-                <button id="summarizeButton" class="gemini-btn flex-1 bg-white border border-blue-300 text-blue-700 font-semibold py-2 px-4 rounded-lg shadow-sm hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                    ✨ Обобщить текст
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                <button id="splitButton" class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
+                    Разделить текст
                 </button>
-                 <button id="hashtagsButton" cl
+                 <div class="flex items-center">
+                    <label for="chunkSize" class="mr-2 text-gray-700">Длина части:</label>
+                    <input type="number" id="chunkSize" value="500" class="w-24 p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <div id="output" class="space-y-6">
+                <!-- Сюда будут добавляться разделенные фрагменты текста -->
+            </div>
+        </main>
+
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Создано с помощью Gemini</p>
+        </footer>
+
+    </div>
+
+    <script>
+        // --- Основные элементы ---
+        const splitButton = document.getElementById('splitButton');
+        const inputText = document.getElementById('inputText');
+        const outputDiv = document.getElementById('output');
+        const chunkSizeInput = document.getElementById('chunkSize');
+
+        // --- Функция для разделения текста ---
+        function splitText() {
+            const text = inputText.value.trim();
+            const maxLength = parseInt(chunkSizeInput.value, 10) || 500;
+            outputDiv.innerHTML = ''; // Очищаем предыдущий результат
+
+            if (text.length === 0) {
+                return; // Ничего не делаем, если текста нет
+            }
+
+            let remainingText = text;
+            let partNumber = 1;
+
+            while (remainingText.length > 0) {
+                let chunk;
+                let nextStart;
+
+                // Если оставшийся текст короче максимальной длины, берем его целиком
+                if (remainingText.length <= maxLength) {
+                    chunk = remainingText;
+                    nextStart = remainingText.length;
+                } else {
+                    // Ищем последнее подходящее место для разрыва (пробел, перенос строки)
+                    let cutOff = -1;
+                    // Ищем с конца отрезка maxLength
+                    for (let i = maxLength; i > 0; i--) {
+                        if (/\s/.test(remainingText[i])) {
+                            cutOff = i;
+                            break;
+                        }
+                    }
+
+                    // Если не нашли пробел (очень длинное слово), просто режем по maxLength
+                    if (cutOff === -1) {
+                        cutOff = maxLength;
+                    }
+                    
+                    chunk = remainingText.substring(0, cutOff).trim();
+                    nextStart = cutOff;
+                }
+                
+                // Создаем и добавляем блок с фрагментом на страницу
+                createChunkElement(chunk, partNumber, Math.ceil(text.length / maxLength));
+
+                remainingText = remainingText.substring(nextStart).trim();
+                partNumber++;
+            }
+        }
+
+        // --- Функция для создания блока с фрагментом ---
+        function createChunkElement(chunk, part, totalParts) {
+            const chunkId = `chunk-${part}`;
+            const characterCount = chunk.length;
+
+            const container = document.createElement('div');
+            container.className = 'bg-gray-50 p-4 rounded-xl border border-gray-200';
+
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-3';
+
+            const title = document.createElement('h3');
+            title.className = 'text-md font-semibold text-gray-800';
+            title.textContent = `Часть ${part} из ${totalParts}`;
+            
+            const copyButtonContainer = document.createElement('div');
+            copyButtonContainer.className = 'relative';
+
+            const copyButton = document.createElement('button');
+            copyButton.className = 'bg-gray-200 text-gray-700 font-medium py-1 px-4 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 transition';
+            copyButton.textContent = 'Копировать';
+            copyButton.onclick = () => copyToClipboard(chunkId, copyButton);
+            
+            const feedback = document.createElement('span');
+            feedback.className = 'copy-feedback absolute -top-7 right-0 bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-md opacity-0';
+            feedback.textContent = 'Скопировано!';
+            
+            copyButtonContainer.appendChild(copyButton);
+            copyButtonContainer.appendChild(feedback);
+
+            header.appendChild(title);
+            header.appendChild(copyButtonContainer);
+
+            const textarea = document.createElement('textarea');
+            textarea.id = chunkId;
+            textarea.readOnly = true;
+            textarea.rows = Math.max(5, Math.ceil(characterCount / 80)); // Динамическая высота
+            textarea.className = 'w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-800 text-base leading-relaxed resize-none';
+            textarea.value = chunk;
+
+            const footer = document.createElement('div');
+            footer.className = 'text-right text-sm text-gray-500 mt-2';
+            footer.textContent = `Символов: ${characterCount}`;
+            
+            container.appendChild(header);
+            container.appendChild(textarea);
+            container.appendChild(footer);
+            outputDiv.appendChild(container);
+        }
+
+        // --- Функция для копирования в буфер обмена ---
+        function copyToClipboard(elementId, button) {
+            const textarea = document.getElementById(elementId);
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // Для мобильных устройств
+
+            try {
+                document.execCommand('copy');
+                const feedback = button.nextElementSibling;
+                feedback.style.opacity = '1';
+                setTimeout(() => {
+                    feedback.style.opacity = '0';
+                }, 2000);
+            } catch (err) {
+                console.error('Не удалось скопировать текст: ', err);
+                alert('Не удалось скопировать текст. Пожалуйста, скопируйте вручную.');
+            }
+
+            window.getSelection().removeAllRanges(); // Снимаем выделение
+        }
+
+
+        // --- Назначаем обработчик на кнопку ---
+        splitButton.addEventListener('click', splitText);
+    </script>
+</body>
+</html>
